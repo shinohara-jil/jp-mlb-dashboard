@@ -1,31 +1,37 @@
-// 画面の動き：データを読み込んでカードを描く / 更新ボタンの処理
+// 画面の動き
+//  - ページを開いたら、保存済みデータ(data/latest.json)をすぐ表示
+//  - 「更新」ボタンを押したら、ブラウザが直接MLB公式から最新を取得して表示
+//  （※静的サイト用。裏方サーバーは不要）
 
+const API = "https://statsapi.mlb.com/api/v1";
 const $ = (id) => document.getElementById(id);
 
-// ページを開いたら、保存済みの最新データを表示
 window.addEventListener("DOMContentLoaded", () => {
-  loadData();
-  $("update-btn").addEventListener("click", updateData);
+  loadSaved();
+  $("update-btn").addEventListener("click", liveUpdate);
 });
 
-async function loadData() {
+// ===== 保存済みデータの読み込み（高速表示）=====
+async function loadSaved() {
   try {
-    const res = await fetch("/api/data");
+    const res = await fetch("data/latest.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("no data");
     const data = await res.json();
     render(data);
   } catch (e) {
-    setStatus("データの読み込みに失敗しました。", true);
+    // 保存データが無ければ、その場で取得を試みる
+    setStatus("保存データがありません。最新を取得します…");
+    liveUpdate();
   }
 }
 
-async function updateData() {
+// ===== ブラウザから直接MLBを取得（更新ボタン）=====
+async function liveUpdate() {
   const btn = $("update-btn");
   btn.disabled = true;
-  setStatus("MLB公式サービスから最新成績を取得しています…（数秒かかります）");
+  setStatus("MLB公式サービスから最新成績を取得しています…（数秒〜十数秒かかります）");
   try {
-    const res = await fetch("/api/update", { method: "POST" });
-    if (!res.ok) throw new Error("server error");
-    const data = await res.json();
+    const data = await fetchAll();
     render(data);
     setStatus("");
   } catch (e) {
@@ -41,10 +47,107 @@ function setStatus(msg, isError = false) {
   el.className = "status" + (isError ? " error" : "");
 }
 
-// ===== 描画 =====
+// ============================================================
+//  データ取得（fetch_stats.py のブラウザ版）
+// ============================================================
+function currentSeason() {
+  // MLBは米国時間基準。米東部(UTC-5)の年を使う
+  const us = new Date(Date.now() - 5 * 3600 * 1000);
+  return us.getUTCFullYear();
+}
+
+async function getJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+async function loadNameMap() {
+  try {
+    return await getJson("config/name_map.json");
+  } catch (e) {
+    return {};
+  }
+}
+
+async function fetchSeasonStat(pid, group, season) {
+  const url = `${API}/people/${pid}/stats?stats=season&group=${group}&season=${season}`;
+  const data = await getJson(url);
+  const stats = data.stats || [];
+  if (stats.length && stats[0].splits && stats[0].splits.length) {
+    return stats[0].splits[0].stat;
+  }
+  return null;
+}
+
+async function fetchLatestGame(pid, group, season) {
+  const url = `${API}/people/${pid}/stats?stats=gameLog&group=${group}&season=${season}`;
+  const data = await getJson(url);
+  const stats = data.stats || [];
+  if (stats.length && stats[0].splits && stats[0].splits.length) {
+    const last = stats[0].splits[stats[0].splits.length - 1];
+    return { date: last.date, opponent: (last.opponent || {}).name, stat: last.stat || {} };
+  }
+  return null;
+}
+
+async function buildPlayer(player, nameMap, season, teamMap) {
+  const pid = player.id;
+  const nameEn = player.fullName || "";
+  const nameJa = nameMap[nameEn] || nameEn;
+  const pos = (player.primaryPosition || {}).abbreviation || "";
+  const isPitcher = pos === "P";
+  const isTwoWay = pos === "TWP";
+  const teamId = (player.currentTeam || {}).id;
+  const team = teamMap[teamId] || "";
+
+  const result = { id: pid, name_ja: nameJa, name_en: nameEn, position: pos, team, hitting: null, pitching: null };
+  let hasStat = false;
+
+  if (!isPitcher) {
+    const seasonH = await fetchSeasonStat(pid, "hitting", season);
+    if (seasonH) {
+      hasStat = true;
+      result.hitting = { season: seasonH, latest: await fetchLatestGame(pid, "hitting", season) };
+    }
+  }
+  if (isPitcher || isTwoWay) {
+    const seasonP = await fetchSeasonStat(pid, "pitching", season);
+    if (seasonP) {
+      hasStat = true;
+      result.pitching = { season: seasonP, latest: await fetchLatestGame(pid, "pitching", season) };
+    }
+  }
+  return hasStat ? result : null;
+}
+
+async function fetchAll() {
+  const season = currentSeason();
+  const nameMap = await loadNameMap();
+
+  const teamsData = await getJson(`${API}/teams?sportId=1&season=${season}`);
+  const teamMap = {};
+  (teamsData.teams || []).forEach((t) => { teamMap[t.id] = t.abbreviation || ""; });
+
+  const playersData = await getJson(`${API}/sports/1/players?season=${season}`);
+  const japanese = (playersData.people || []).filter((p) => p.birthCountry === "Japan");
+
+  // 全選手を並行取得（速くするため）
+  const built = await Promise.all(
+    japanese.map((p) => buildPlayer(p, nameMap, season, teamMap).catch(() => null))
+  );
+  const players = built.filter(Boolean);
+
+  const now = new Date(Date.now() + 9 * 3600 * 1000); // JST
+  const updated = now.toISOString().slice(0, 16).replace("T", " ");
+  return { season, updated_at: updated, players };
+}
+
+// ============================================================
+//  描画
+// ============================================================
 function render(data) {
   $("updated").textContent = "最終更新: " + (data.updated_at || "—");
-
   const players = data.players || [];
   if (players.length === 0) {
     $("pitchers").innerHTML = emptyMsg("まだデータがありません。「🔄 更新」を押してください。");
@@ -52,27 +155,14 @@ function render(data) {
     $("highlights").innerHTML = `<div class="highlight-empty">データがありません。</div>`;
     return;
   }
-
-  // 投手セクション：pitching を持つ選手
-  const pitchers = players.filter((p) => p.pitching);
-  $("pitchers").innerHTML = pitchers.map(pitcherCard).join("") || emptyMsg("対象なし");
-
-  // 野手セクション：hitting を持つ選手
-  const batters = players.filter((p) => p.hitting);
-  $("batters").innerHTML = batters.map(batterCard).join("") || emptyMsg("対象なし");
-
+  $("pitchers").innerHTML = players.filter((p) => p.pitching).map(pitcherCard).join("") || emptyMsg("対象なし");
+  $("batters").innerHTML = players.filter((p) => p.hitting).map(batterCard).join("") || emptyMsg("対象なし");
   renderHighlights(players);
 }
 
-function emptyMsg(text) {
-  return `<div class="highlight-empty">${text}</div>`;
-}
+function emptyMsg(text) { return `<div class="highlight-empty">${text}</div>`; }
+function teamTag(p) { return p.team ? `<span class="card-team">${p.team}</span>` : ""; }
 
-function teamTag(p) {
-  return p.team ? `<span class="card-team">${p.team}</span>` : "";
-}
-
-// 最新試合が「活躍」かどうかを判定（強調用）
 function isHotHitting(latest) {
   if (!latest) return false;
   const s = latest.stat || {};
@@ -89,12 +179,10 @@ function statCell(value, label) {
   return `<div class="stat"><b>${value ?? "—"}</b><span>${label}</span></div>`;
 }
 
-// ===== 投手カード =====
 function pitcherCard(p) {
   const s = p.pitching.season || {};
   const latest = p.pitching.latest;
   const hot = isHotPitching(latest);
-
   let latestHtml;
   if (latest) {
     const ls = latest.stat || {};
@@ -104,7 +192,6 @@ function pitcherCard(p) {
   } else {
     latestHtml = `<div class="latest-none">登板なし</div>`;
   }
-
   return `
   <div class="card ${hot ? "hot" : ""}">
     <div class="card-head"><span class="card-name">${p.name_ja}</span>${teamTag(p)}</div>
@@ -130,12 +217,10 @@ function decision(ls) {
   return "";
 }
 
-// ===== 野手カード =====
 function batterCard(p) {
   const s = p.hitting.season || {};
   const latest = p.hitting.latest;
   const hot = isHotHitting(latest);
-
   let latestHtml;
   if (latest) {
     const ls = latest.stat || {};
@@ -147,7 +232,6 @@ function batterCard(p) {
   } else {
     latestHtml = `<div class="latest-none">出場なし</div>`;
   }
-
   return `
   <div class="card ${hot ? "hot" : ""}">
     <div class="card-head"><span class="card-name">${p.name_ja}</span>${teamTag(p)}</div>
@@ -165,19 +249,15 @@ function batterCard(p) {
   </div>`;
 }
 
-// ===== ハイライト（最新の試合日に活躍した選手）=====
 function renderHighlights(players) {
-  // すべての最新試合の中で一番新しい日付を求める
   let maxDate = "";
   players.forEach((p) => {
     [p.hitting, p.pitching].forEach((g) => {
       if (g && g.latest && g.latest.date > maxDate) maxDate = g.latest.date;
     });
   });
-
   const rows = [];
   players.forEach((p) => {
-    // 直近の試合日に出場した野手は全員表示（活躍した人には🔥）
     if (p.hitting && p.hitting.latest && p.hitting.latest.date === maxDate) {
       const ls = p.hitting.latest.stat;
       const hr = (ls.homeRuns || 0) >= 1 ? ` ${ls.homeRuns}本塁打` : "";
@@ -185,14 +265,12 @@ function renderHighlights(players) {
       const fire = isHotHitting(p.hitting.latest) ? " 🔥" : "";
       rows.push(`<span class="h-name">${p.name_ja}</span> ${ls.atBats ?? 0}打数${ls.hits ?? 0}安打${hr}${rbi}${fire}`);
     }
-    // 直近の試合日に登板した投手は全員表示（活躍した人には🔥）
     if (p.pitching && p.pitching.latest && p.pitching.latest.date === maxDate) {
       const ls = p.pitching.latest.stat;
       const fire = isHotPitching(p.pitching.latest) ? " 🔥" : "";
       rows.push(`<span class="h-name">${p.name_ja}</span> ${ls.inningsPitched ?? 0}回 ${ls.earnedRuns ?? 0}失点 ${ls.strikeOuts ?? 0}奪三振${decision(ls)}${fire}`);
     }
   });
-
   const html = rows.length
     ? `<div class="highlight-date" style="font-size:12px;color:#8a97a3;margin-bottom:6px;">${maxDate}（米国時間）の試合より</div>` +
       rows.map((r) => `<div class="highlight-row">${r}</div>`).join("")

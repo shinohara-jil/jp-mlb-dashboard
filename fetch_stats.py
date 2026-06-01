@@ -180,9 +180,13 @@ def fetch_and_save(limit=None):
 
 
 if __name__ == "__main__":
-    # テスト実行：引数で人数を絞れる（例: python fetch_stats.py 2）
-    lim = int(sys.argv[1]) if len(sys.argv) > 1 else None
+    # 使い方:
+    #   python fetch_stats.py        … 全選手を取得して保存（本番・自動更新で使用）
+    #   python fetch_stats.py 3      … 3人だけ取得（保存しないテスト）
     print(f"=== {current_season()}年シーズン 取得開始 ===")
-    data = fetch_all(limit=lim)
-    print(f"=== 完了: 表示対象 {len(data['players'])} 人 ===")
-    print(json.dumps(data, ensure_ascii=False, indent=2)[:2000])
+    if len(sys.argv) > 1:
+        data = fetch_all(limit=int(sys.argv[1]))
+        print(f"=== テスト完了: 表示対象 {len(data['players'])} 人（保存なし）===")
+    else:
+        data = fetch_and_save()
+        print(f"=== 完了: 表示対象 {len(data['players'])} 人 / data に保存しました ===")

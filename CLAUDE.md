@@ -6,25 +6,38 @@ MLBに在籍する日本人選手（投手・野手）の成績を、自分のPC
 ローカルWebダッシュボード。「最新試合」と「シーズン通算」を投手・野手に分けて表示する。
 非エンジニアのユーザーがバイブコーディングで作った「1日1個アプリ」の1つ。
 
-## 動かし方
+## 公開と構成（重要）
 
-- このフォルダで `python app.py` を実行 → 自動でブラウザが開く（`http://127.0.0.1:8000/`）。
-- 画面右上「🔄 更新」でMLB公式から最新成績を取得。
-- 終了は実行画面で `Ctrl + C`。
-- 追加インストール不要（Python標準ライブラリのみで動く）。
-- ポート競合時は環境変数 `PORT` で変更可（例: `PORT=8001`）。
+- **静的サイトとして GitHub Pages で公開**している。リポジトリは**パブリック**。
+- データ取得は**ブラウザ側(app.js)**で行う（MLB APIはCORS許可済み `Access-Control-Allow-Origin: *`）。裏方サーバーは不要。
+- **毎朝 日本時間10時ごろ、GitHub Actions が `fetch_stats.py` を実行**して成績を取得し、
+  `data/` をリポジトリにコミット（＝リポジトリ自体が履歴の保管庫。外部DB不要）。
+- 画面は `data/latest.json` を読んで即表示。「🔄 更新」ボタンはブラウザが直接MLBからライブ取得。
 
-## 構成
+## ローカルで動かす
+
+- このフォルダで `python app.py` を実行 → ブラウザが開く（`http://127.0.0.1:8000/`）。
+  これは公開版と同じ表示を手元で確認するための簡易静的サーバー。
+- 追加インストール不要（Python標準ライブラリのみ）。ポート競合時は `PORT` 環境変数で変更可。
+
+## 構成（GitHub Pages 用にサイトファイルはリポジトリ直下）
 
 ```
-app.py            … Webサーバー（画面表示＋「更新」処理の裏方）
-fetch_stats.py    … MLB公式APIから成績を取得・整形・保存する中核
+index.html, style.css, app.js … 画面（app.js がブラウザ側でデータ取得・表示）
+fetch_stats.py    … MLB公式APIから成績を取得・整形・保存（自動更新で使用）
 config/name_map.json … 英語名→日本語名の対応表
-data/latest.json  … 最新の表示用データ（自動生成）
-data/history/     … 日付ごとのスナップショット（自動生成・蓄積）
-web/index.html, style.css, app.js … 画面（骨組み・見た目・動き）
+data/latest.json  … 最新の表示用データ
+data/history/     … 日付ごとのスナップショット（蓄積）
+app.py            … ローカル確認用の簡易静的サーバー
+.github/workflows/update.yml … 毎朝の自動更新（GitHub Actions）
 docs/             … 要件・設計・実装・運用ドキュメント
 ```
+
+## パス・公開の注意
+
+- GitHub Pages はURLに階層が付く（`https://<user>.github.io/<repo>/`）ため、
+  HTML内の参照は**相対パス**（`style.css` / `app.js` / `data/latest.json`）にすること。先頭スラッシュ禁止。
+- サイトファイルはリポジトリ**直下**に置く（Pagesは `main` ブランチのルートを配信）。`docs/` は別用途なので使わない。
 
 ## データの取得元
 
