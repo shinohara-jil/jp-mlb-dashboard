@@ -80,13 +80,37 @@ async function fetchSeasonStat(pid, group, season) {
   return null;
 }
 
+const gameDateCache = {};
+// gamePk から試合開始時刻を取得し、日本時間の日付(YYYY-MM-DD)を返す
+async function getGameJstDate(gamePk) {
+  if (gamePk == null) return null;
+  if (gamePk in gameDateCache) return gameDateCache[gamePk];
+  let result = null;
+  try {
+    const data = await getJson(`${API}/schedule?gamePks=${gamePk}`);
+    for (const d of data.dates || []) {
+      for (const g of d.games || []) {
+        if (g.gamePk === gamePk && g.gameDate) {
+          const jst = new Date(new Date(g.gameDate).getTime() + 9 * 3600 * 1000);
+          result = jst.toISOString().slice(0, 10);
+        }
+      }
+    }
+  } catch (e) {
+    result = null;
+  }
+  gameDateCache[gamePk] = result;
+  return result;
+}
+
 async function fetchLatestGame(pid, group, season) {
   const url = `${API}/people/${pid}/stats?stats=gameLog&group=${group}&season=${season}`;
   const data = await getJson(url);
   const stats = data.stats || [];
   if (stats.length && stats[0].splits && stats[0].splits.length) {
     const last = stats[0].splits[stats[0].splits.length - 1];
-    return { date: last.date, opponent: (last.opponent || {}).name, stat: last.stat || {} };
+    const jst = await getGameJstDate((last.game || {}).gamePk);
+    return { date: jst || last.date, opponent: (last.opponent || {}).name, stat: last.stat || {} };
   }
   return null;
 }
@@ -272,7 +296,7 @@ function renderHighlights(players) {
     }
   });
   const html = rows.length
-    ? `<div class="highlight-date" style="font-size:12px;color:#8a97a3;margin-bottom:6px;">${maxDate}（米国時間）の試合より</div>` +
+    ? `<div class="highlight-date" style="font-size:12px;color:#8a97a3;margin-bottom:6px;">${maxDate}（日本時間）の試合より</div>` +
       rows.map((r) => `<div class="highlight-row">${r}</div>`).join("")
     : `<div class="highlight-empty">直近の試合で目立った成績はありませんでした。</div>`;
   $("highlights").innerHTML = html;

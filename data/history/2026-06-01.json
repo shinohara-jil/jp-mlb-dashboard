@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "updated_at": "2026-06-01 22:16",
+  "updated_at": "2026-06-01 22:36",
   "players": [
     {
       "id": 837227,
@@ -75,7 +75,7 @@
           "sacFlies": 0
         },
         "latest": {
-          "date": "2026-05-31",
+          "date": "2026-06-01",
           "opponent": "Milwaukee Brewers",
           "stat": {
             "summary": "6.0 IP, 2 ER, 5 K, 2 BB",
@@ -218,7 +218,7 @@
           "sacFlies": 1
         },
         "latest": {
-          "date": "2026-05-29",
+          "date": "2026-05-30",
           "opponent": "St. Louis Cardinals",
           "stat": {
             "summary": "5.1 IP, 5 ER, 2 K, BB",
@@ -361,7 +361,7 @@
           "sacFlies": 3
         },
         "latest": {
-          "date": "2026-04-29",
+          "date": "2026-04-30",
           "opponent": "Chicago White Sox",
           "stat": {
             "summary": "2.0 IP, 0 ER, K, BB",
@@ -504,7 +504,7 @@
           "sacFlies": 3
         },
         "latest": {
-          "date": "2026-05-31",
+          "date": "2026-06-01",
           "opponent": "Washington Nationals",
           "stat": {
             "summary": "1.0 IP, 0 ER, K, 0 BB",
@@ -618,7 +618,7 @@
           "atBatsPerHomeRun": "10.00"
         },
         "latest": {
-          "date": "2026-05-29",
+          "date": "2026-05-30",
           "opponent": "Detroit Tigers",
           "stat": {
             "summary": "0-2 | K",
@@ -706,7 +706,7 @@
           "atBatsPerHomeRun": "-.--"
         },
         "latest": {
-          "date": "2026-05-31",
+          "date": "2026-06-01",
           "opponent": "Detroit Tigers",
           "stat": {
             "summary": "1-2 | K",
@@ -794,7 +794,7 @@
           "atBatsPerHomeRun": "20.70"
         },
         "latest": {
-          "date": "2026-05-31",
+          "date": "2026-06-01",
           "opponent": "Philadelphia Phillies",
           "stat": {
             "summary": "2-5 | K",
@@ -902,7 +902,7 @@
           "sacFlies": 1
         },
         "latest": {
-          "date": "2026-05-27",
+          "date": "2026-05-28",
           "opponent": "Colorado Rockies",
           "stat": {
             "summary": "6.0 IP, ER, 7 K, 4 BB",
@@ -1016,7 +1016,7 @@
           "atBatsPerHomeRun": "17.50"
         },
         "latest": {
-          "date": "2026-05-31",
+          "date": "2026-06-01",
           "opponent": "Baltimore Orioles",
           "stat": {
             "summary": "0-2 | 2 BB, 2 K, R",
@@ -1133,7 +1133,7 @@
           "sacFlies": 0
         },
         "latest": {
-          "date": "2026-05-30",
+          "date": "2026-05-31",
           "opponent": "Philadelphia Phillies",
           "stat": {
             "summary": "5.1 IP, ER, 7 K, BB",
@@ -1276,7 +1276,7 @@
           "sacFlies": 0
         },
         "latest": {
-          "date": "2026-04-26",
+          "date": "2026-04-27",
           "opponent": "Colorado Rockies",
           "stat": {
             "summary": "2.2 IP, 3 ER, K, 3 BB",
@@ -1419,7 +1419,7 @@
           "sacFlies": 4
         },
         "latest": {
-          "date": "2026-05-27",
+          "date": "2026-05-28",
           "opponent": "Los Angeles Dodgers",
           "stat": {
             "summary": "4.2 IP, 3 ER, 3 K, BB",
@@ -1533,7 +1533,7 @@
           "atBatsPerHomeRun": "24.57"
         },
         "latest": {
-          "date": "2026-05-31",
+          "date": "2026-06-01",
           "opponent": "St. Louis Cardinals",
           "stat": {
             "summary": "0-4 | 2 K",
@@ -1650,7 +1650,7 @@
           "sacFlies": 1
         },
         "latest": {
-          "date": "2026-05-31",
+          "date": "2026-06-01",
           "opponent": "Philadelphia Phillies",
           "stat": {
             "summary": "5.1 IP, 0 ER, 10 K, 2 BB",
@@ -1764,7 +1764,7 @@
           "atBatsPerHomeRun": "112.00"
         },
         "latest": {
-          "date": "2026-05-31",
+          "date": "2026-06-01",
           "opponent": "Cleveland Guardians",
           "stat": {
             "summary": "2-5 | K, 2 RBI, R",

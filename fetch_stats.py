@@ -68,15 +68,41 @@ def fetch_season_stat(pid, group, season):
     return None
 
 
+_game_date_cache = {}
+
+
+def get_game_jst_date(game_pk):
+    """gamePk から試合開始時刻を取得し、日本時間の日付(YYYY-MM-DD)を返す。失敗時 None。"""
+    if game_pk is None:
+        return None
+    if game_pk in _game_date_cache:
+        return _game_date_cache[game_pk]
+    result = None
+    try:
+        data = get_json(f"{API}/schedule?gamePks={game_pk}")
+        for d in data.get("dates", []):
+            for g in d.get("games", []):
+                if g.get("gamePk") == game_pk and g.get("gameDate"):
+                    dt = datetime.fromisoformat(g["gameDate"].replace("Z", "+00:00"))
+                    jst = dt + timedelta(hours=9)
+                    result = jst.strftime("%Y-%m-%d")
+    except Exception:
+        result = None
+    _game_date_cache[game_pk] = result
+    return result
+
+
 def fetch_latest_game(pid, group, season):
-    """試合ごとの成績から最新の1試合を取得。無ければ None。"""
+    """試合ごとの成績から最新の1試合を取得。日付は日本時間に変換。無ければ None。"""
     url = f"{API}/people/{pid}/stats?stats=gameLog&group={group}&season={season}"
     data = get_json(url)
     stats = data.get("stats", [])
     if stats and stats[0].get("splits"):
         last = stats[0]["splits"][-1]
+        game_pk = last.get("game", {}).get("gamePk")
+        jst_date = get_game_jst_date(game_pk)
         return {
-            "date": last.get("date"),
+            "date": jst_date or last.get("date"),  # 日本時間（取れない時は元の日付）
             "opponent": last.get("opponent", {}).get("name"),
             "stat": last.get("stat", {}),
         }
