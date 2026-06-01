@@ -187,6 +187,22 @@ function render(data) {
 function emptyMsg(text) { return `<div class="highlight-empty">${text}</div>`; }
 function teamTag(p) { return p.team ? `<span class="card-team">${p.team}</span>` : ""; }
 
+// ===== 顔写真 =====
+// 選手IDからMLB公式の顔写真URLを作る。画像ファイルは持たず、表示時にブラウザが読み込む。
+function headshotUrl(pid) {
+  return `https://midfield.mlbstatic.com/v1/people/${pid}/spots/120`;
+}
+// 写真が無い／読み込み失敗の選手は、灰色の丸に差し替えてレイアウトを崩さない。
+function avatarFallback(img) {
+  img.onerror = null;
+  img.src = "data:image/svg+xml," + encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><circle cx='24' cy='24' r='24' fill='#dfe5ec'/></svg>"
+  );
+}
+function avatar(p, cls) {
+  return `<img class="avatar ${cls}" src="${headshotUrl(p.id)}" alt="${p.name_ja}" loading="lazy" onerror="avatarFallback(this)">`;
+}
+
 function isHotHitting(latest) {
   if (!latest) return false;
   const s = latest.stat || {};
@@ -218,7 +234,7 @@ function pitcherCard(p) {
   }
   return `
   <div class="card ${hot ? "hot" : ""}">
-    <div class="card-head"><span class="card-name">${p.name_ja}</span>${teamTag(p)}</div>
+    <div class="card-head"><div class="card-id">${avatar(p, "avatar-card")}<span class="card-name">${p.name_ja}</span></div>${teamTag(p)}</div>
     <div class="block-label">最新登板</div>
     ${latestHtml}
     <div class="block-label">シーズン通算</div>
@@ -258,7 +274,7 @@ function batterCard(p) {
   }
   return `
   <div class="card ${hot ? "hot" : ""}">
-    <div class="card-head"><span class="card-name">${p.name_ja}</span>${teamTag(p)}</div>
+    <div class="card-head"><div class="card-id">${avatar(p, "avatar-card")}<span class="card-name">${p.name_ja}</span></div>${teamTag(p)}</div>
     <div class="block-label">最新試合</div>
     ${latestHtml}
     <div class="block-label">シーズン通算</div>
@@ -287,12 +303,12 @@ function renderHighlights(players) {
       const hr = (ls.homeRuns || 0) >= 1 ? ` ${ls.homeRuns}本塁打` : "";
       const rbi = (ls.rbi || 0) >= 1 ? ` ${ls.rbi}打点` : "";
       const fire = isHotHitting(p.hitting.latest) ? " 🔥" : "";
-      rows.push(`<span class="h-name">${p.name_ja}</span> ${ls.atBats ?? 0}打数${ls.hits ?? 0}安打${hr}${rbi}${fire}`);
+      rows.push(`${avatar(p, "avatar-mini")}<span class="h-name">${p.name_ja}</span> ${ls.atBats ?? 0}打数${ls.hits ?? 0}安打${hr}${rbi}${fire}`);
     }
     if (p.pitching && p.pitching.latest && p.pitching.latest.date === maxDate) {
       const ls = p.pitching.latest.stat;
       const fire = isHotPitching(p.pitching.latest) ? " 🔥" : "";
-      rows.push(`<span class="h-name">${p.name_ja}</span> ${ls.inningsPitched ?? 0}回 ${ls.earnedRuns ?? 0}失点 ${ls.strikeOuts ?? 0}奪三振${decision(ls)}${fire}`);
+      rows.push(`${avatar(p, "avatar-mini")}<span class="h-name">${p.name_ja}</span> ${ls.inningsPitched ?? 0}回 ${ls.earnedRuns ?? 0}失点 ${ls.strikeOuts ?? 0}奪三振${decision(ls)}${fire}`);
     }
   });
   const html = rows.length
