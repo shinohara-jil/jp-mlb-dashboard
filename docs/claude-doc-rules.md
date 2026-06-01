@@ -17,4 +17,5 @@
 
 ## 40-operations（運用）
 
-- [使い方（起動方法）](40-operations/how-to-run.md) — 起動・更新・トラブル対処
+- [使い方（起動方法）](40-operations/how-to-run.md) — ローカルでの起動・更新・トラブル対処
+- [公開（デプロイ）と自動更新](40-operations/deployment.md) — GitHub Pages公開・毎朝の自動更新・公開時の注意
