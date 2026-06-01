@@ -1,0 +1,136 @@
+:root {
+  --navy: #1B3A5C;
+  --blue: #4A90D9;
+  --text: #333333;
+  --muted: #8a97a3;
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --hot: #e8722e;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ===== ヘッダー ===== */
+.header {
+  background: var(--navy);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.header h1 { font-size: 20px; margin: 0; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.updated { font-size: 13px; color: #c9d6e3; }
+.update-btn {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+}
+.update-btn:hover { background: #3a7bc0; }
+.update-btn:disabled { opacity: .6; cursor: progress; }
+
+/* ===== レイアウト ===== */
+.main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+.section { margin-bottom: 28px; }
+.section-title {
+  font-size: 17px;
+  color: var(--navy);
+  border-left: 5px solid var(--blue);
+  padding-left: 10px;
+  margin: 0 0 14px;
+}
+.status {
+  text-align: center;
+  color: var(--muted);
+  padding: 8px;
+  font-size: 14px;
+}
+.status.error { color: #c0392b; }
+
+/* ===== ハイライト ===== */
+.highlights {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.highlight-row { padding: 6px 0; font-size: 15px; border-bottom: 1px solid #eef1f4; }
+.highlight-row:last-child { border-bottom: none; }
+.highlight-row .h-name { font-weight: 700; color: var(--navy); }
+.highlight-empty { color: var(--muted); }
+
+/* ===== カード ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+.card {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  border-top: 4px solid var(--blue);
+}
+.card.hot { border-top-color: var(--hot); }
+.card-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.card-name { font-size: 17px; font-weight: 700; color: var(--navy); }
+.card-team { font-size: 12px; color: var(--muted); }
+
+.block-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 10px 0 4px;
+  font-weight: 600;
+}
+.latest-line { font-size: 14px; }
+.latest-line .date { color: var(--muted); font-size: 12px; margin-right: 6px; }
+.latest-none { color: var(--muted); font-size: 14px; }
+.fire { color: var(--hot); }
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.stat {
+  font-size: 14px;
+}
+.stat b { color: var(--navy); font-size: 16px; }
+.stat span { color: var(--muted); font-size: 11px; display: block; }
+
+/* ===== フッター ===== */
+.footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 24px;
+}
+
+@media (max-width: 480px) {
+  .header h1 { font-size: 16px; }
+}
