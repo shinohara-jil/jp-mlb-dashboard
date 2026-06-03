@@ -6,9 +6,21 @@
 const API = "https://statsapi.mlb.com/api/v1";
 const $ = (id) => document.getElementById(id);
 
+let currentData = null;        // 直近に読み込んだ全データ（絞り込みの元）
+let currentLeague = "ALL";     // 選択中のリーグ（ALL / AL / NL）
+
 window.addEventListener("DOMContentLoaded", () => {
   loadSaved();
   $("update-btn").addEventListener("click", liveUpdate);
+  // リーグ絞り込みボタン
+  document.querySelectorAll("#league-filter .filter-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentLeague = btn.dataset.league;
+      document.querySelectorAll("#league-filter .filter-btn").forEach((b) =>
+        b.classList.toggle("is-active", b === btn));
+      if (currentData) render(currentData);
+    });
+  });
 });
 
 // ===== 保存済みデータの読み込み（高速表示）=====
@@ -70,6 +82,18 @@ async function loadNameMap() {
   }
 }
 
+// チーム略称→リーグ（AL/NL）の固定対応表。先頭の説明キー(_)は除外。
+async function loadTeamLeague() {
+  try {
+    const data = await getJson("config/team_league.json");
+    const map = {};
+    Object.keys(data).forEach((k) => { if (!k.startsWith("_")) map[k] = data[k]; });
+    return map;
+  } catch (e) {
+    return {};
+  }
+}
+
 async function fetchSeasonStat(pid, group, season) {
   const url = `${API}/people/${pid}/stats?stats=season&group=${group}&season=${season}`;
   const data = await getJson(url);
@@ -80,26 +104,31 @@ async function fetchSeasonStat(pid, group, season) {
   return null;
 }
 
-const gameDateCache = {};
-// gamePk から試合開始時刻を取得し、日本時間の日付(YYYY-MM-DD)を返す
-async function getGameJstDate(gamePk) {
-  if (gamePk == null) return null;
-  if (gamePk in gameDateCache) return gameDateCache[gamePk];
-  let result = null;
+const gameInfoCache = {};
+// gamePk から試合の日本時間日付と進行状態を取得する。
+// 戻り値: { date: "YYYY-MM-DD"|null, live: true/false }（live=試合進行中）
+async function getGameInfo(gamePk) {
+  const empty = { date: null, live: false };
+  if (gamePk == null) return empty;
+  if (gamePk in gameInfoCache) return gameInfoCache[gamePk];
+  let result = { ...empty };
   try {
     const data = await getJson(`${API}/schedule?gamePks=${gamePk}`);
     for (const d of data.dates || []) {
       for (const g of d.games || []) {
-        if (g.gamePk === gamePk && g.gameDate) {
-          const jst = new Date(new Date(g.gameDate).getTime() + 9 * 3600 * 1000);
-          result = jst.toISOString().slice(0, 10);
+        if (g.gamePk === gamePk) {
+          if (g.gameDate) {
+            const jst = new Date(new Date(g.gameDate).getTime() + 9 * 3600 * 1000);
+            result.date = jst.toISOString().slice(0, 10);
+          }
+          result.live = ((g.status || {}).abstractGameState === "Live");
         }
       }
     }
   } catch (e) {
-    result = null;
+    result = { ...empty };
   }
-  gameDateCache[gamePk] = result;
+  gameInfoCache[gamePk] = result;
   return result;
 }
 
@@ -109,13 +138,13 @@ async function fetchLatestGame(pid, group, season) {
   const stats = data.stats || [];
   if (stats.length && stats[0].splits && stats[0].splits.length) {
     const last = stats[0].splits[stats[0].splits.length - 1];
-    const jst = await getGameJstDate((last.game || {}).gamePk);
-    return { date: jst || last.date, opponent: (last.opponent || {}).name, stat: last.stat || {} };
+    const info = await getGameInfo((last.game || {}).gamePk);
+    return { date: info.date || last.date, opponent: (last.opponent || {}).name, stat: last.stat || {}, live: info.live };
   }
   return null;
 }
 
-async function buildPlayer(player, nameMap, season, teamMap) {
+async function buildPlayer(player, nameMap, season, teamMap, leagueMap) {
   const pid = player.id;
   const nameEn = player.fullName || "";
   const nameJa = nameMap[nameEn] || nameEn;
@@ -124,8 +153,9 @@ async function buildPlayer(player, nameMap, season, teamMap) {
   const isTwoWay = pos === "TWP";
   const teamId = (player.currentTeam || {}).id;
   const team = teamMap[teamId] || "";
+  const league = leagueMap[team] || ""; // AL / NL（不明なら空）
 
-  const result = { id: pid, name_ja: nameJa, name_en: nameEn, position: pos, team, hitting: null, pitching: null };
+  const result = { id: pid, name_ja: nameJa, name_en: nameEn, position: pos, team, league, hitting: null, pitching: null };
   let hasStat = false;
 
   if (!isPitcher) {
@@ -148,6 +178,7 @@ async function buildPlayer(player, nameMap, season, teamMap) {
 async function fetchAll() {
   const season = currentSeason();
   const nameMap = await loadNameMap();
+  const leagueMap = await loadTeamLeague();
 
   const teamsData = await getJson(`${API}/teams?sportId=1&season=${season}`);
   const teamMap = {};
@@ -158,7 +189,7 @@ async function fetchAll() {
 
   // 全選手を並行取得（速くするため）
   const built = await Promise.all(
-    japanese.map((p) => buildPlayer(p, nameMap, season, teamMap).catch(() => null))
+    japanese.map((p) => buildPlayer(p, nameMap, season, teamMap, leagueMap).catch(() => null))
   );
   const players = built.filter(Boolean);
 
@@ -171,21 +202,34 @@ async function fetchAll() {
 //  描画
 // ============================================================
 function render(data) {
+  currentData = data; // 絞り込みのため元データを保持
   $("updated").textContent = "最終更新: " + (data.updated_at || "—");
-  const players = data.players || [];
-  if (players.length === 0) {
+  const all = data.players || [];
+  if (all.length === 0) {
     $("pitchers").innerHTML = emptyMsg("まだデータがありません。「🔄 更新」を押してください。");
     $("batters").innerHTML = "";
     $("highlights").innerHTML = `<div class="highlight-empty">データがありません。</div>`;
     return;
   }
-  $("pitchers").innerHTML = players.filter((p) => p.pitching).map(pitcherCard).join("") || emptyMsg("対象なし");
-  $("batters").innerHTML = players.filter((p) => p.hitting).map(batterCard).join("") || emptyMsg("対象なし");
+  // 選択中のリーグで絞り込み（ALLは全員）
+  const players = currentLeague === "ALL"
+    ? all
+    : all.filter((p) => p.league === currentLeague);
+
+  const noMatch = `該当する選手がいません（${leagueLabel(currentLeague)}）`;
+  $("pitchers").innerHTML = players.filter((p) => p.pitching).map(pitcherCard).join("") || emptyMsg(noMatch);
+  $("batters").innerHTML = players.filter((p) => p.hitting).map(batterCard).join("") || emptyMsg(noMatch);
   renderHighlights(players);
+}
+
+function leagueLabel(code) {
+  return code === "AL" ? "ア・リーグ" : code === "NL" ? "ナ・リーグ" : "全部";
 }
 
 function emptyMsg(text) { return `<div class="highlight-empty">${text}</div>`; }
 function teamTag(p) { return p.team ? `<span class="card-team">${p.team}</span>` : ""; }
+// 直近試合が進行中なら「🟢 試合中」タグを返す（カードのみで使用）
+function liveTag(latest) { return (latest && latest.live) ? `<span class="live-tag">🟢 試合中</span>` : ""; }
 
 // ===== 顔写真 =====
 // 選手IDからMLB公式の顔写真URLを作る。画像ファイルは持たず、表示時にブラウザが読み込む。
@@ -235,7 +279,7 @@ function pitcherCard(p) {
   return `
   <div class="card ${hot ? "hot" : ""}">
     <div class="card-head"><div class="card-id">${avatar(p, "avatar-card")}<span class="card-name">${p.name_ja}</span></div>${teamTag(p)}</div>
-    <div class="block-label">最新登板</div>
+    <div class="block-label">最新登板 ${liveTag(latest)}</div>
     ${latestHtml}
     <div class="block-label">シーズン通算</div>
     <div class="stat-row">
@@ -275,7 +319,7 @@ function batterCard(p) {
   return `
   <div class="card ${hot ? "hot" : ""}">
     <div class="card-head"><div class="card-id">${avatar(p, "avatar-card")}<span class="card-name">${p.name_ja}</span></div>${teamTag(p)}</div>
-    <div class="block-label">最新試合</div>
+    <div class="block-label">最新試合 ${liveTag(latest)}</div>
     ${latestHtml}
     <div class="block-label">シーズン通算</div>
     <div class="stat-row">

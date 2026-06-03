@@ -71,6 +71,33 @@ body {
 }
 .status.error { color: #c0392b; }
 
+/* ===== リーグ絞り込み ===== */
+.league-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.filter-label { font-size: 13px; color: var(--muted); margin-right: 2px; }
+.filter-btn {
+  background: #fff;
+  color: var(--navy);
+  border: 1px solid #d4dbe4;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.filter-btn:hover { border-color: var(--blue); }
+.filter-btn.is-active {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+
 /* ===== ハイライト ===== */
 .highlights {
   background: var(--card);
@@ -112,6 +139,18 @@ body {
   color: var(--muted);
   margin: 10px 0 4px;
   font-weight: 600;
+}
+.live-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e8e4e;
+  background: #e6f6ec;
+  border: 1px solid #b8e6c8;
+  border-radius: 999px;
+  padding: 1px 8px;
+  margin-left: 4px;
+  vertical-align: middle;
 }
 .latest-line { font-size: 14px; }
 .latest-line .date { color: var(--muted); font-size: 12px; margin-right: 6px; }

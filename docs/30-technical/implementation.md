@@ -12,7 +12,8 @@
 ├── app.py              # Webサーバー（画面表示＋「更新」処理の裏方）
 ├── fetch_stats.py      # MLB公式APIから成績を取得・整形・保存する中核
 ├── config/
-│   └── name_map.json   # 英語名→日本語名の対応表
+│   ├── name_map.json   # 英語名→日本語名の対応表
+│   └── team_league.json # チーム略称→リーグ(AL/NL)の固定対応表（⑥リーグ絞り込み用）
 ├── data/
 │   ├── latest.json     # 最新の表示用データ（自動生成）
 │   └── history/        # 日付ごとのスナップショット（自動生成）
@@ -53,6 +54,8 @@
 - **シーズン年は米国時間基準**で算出（`current_season()`）。
 - **「最新試合」は gameLog の最後の試合**を表示（厳密な「昨日」ではなく直近試合。休養日にも強い）。
 - **試合日は日本時間に変換**して表示。gameLog には日付しか無いため、`gamePk` で `/schedule` を引いて開始時刻(UTC)を取得し +9時間。同じ試合の重複問い合わせはキャッシュで回避。
+- **リーグ（AL/NL）は固定対応表**：`config/team_league.json` にチーム略称→リーグを持ち、各選手に `league` を付与。MLB APIから動的に引くことも可能だが、予測しやすさ重視で固定表を採用（球団増減時のみ手直し）。画面の絞り込みボタンで `league` を使って表示を絞る。
+- **「試合中」判定は `/schedule` の `status.abstractGameState`**（`Preview`/`Live`/`Final`）。試合日取得と同じ schedule 呼び出しから一緒に読み、最新試合に `live` を付与。`Live` のときカードに「🟢 試合中」タグを表示。fetch_stats.py（毎朝）と app.js（🔄ボタン）の両方に実装。
 
 ## 今後の拡張余地
 

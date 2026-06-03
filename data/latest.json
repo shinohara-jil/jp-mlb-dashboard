@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "updated_at": "2026-06-03 15:08",
+  "updated_at": "2026-06-03 19:02",
   "players": [
     {
       "id": 837227,
@@ -8,6 +8,7 @@
       "name_en": "Tatsuya Imai",
       "position": "P",
       "team": "HOU",
+      "league": "AL",
       "hitting": null,
       "pitching": {
         "season": {
@@ -141,7 +142,8 @@
             "catchersInterference": 0,
             "sacBunts": 1,
             "sacFlies": 0
-          }
+          },
+          "live": false
         }
       }
     },
@@ -151,6 +153,7 @@
       "name_en": "Shota Imanaga",
       "position": "P",
       "team": "CHC",
+      "league": "NL",
       "hitting": null,
       "pitching": {
         "season": {
@@ -284,7 +287,8 @@
             "catchersInterference": 0,
             "sacBunts": 0,
             "sacFlies": 0
-          }
+          },
+          "live": false
         }
       }
     },
@@ -294,6 +298,7 @@
       "name_en": "Yusei Kikuchi",
       "position": "P",
       "team": "LAA",
+      "league": "AL",
       "hitting": null,
       "pitching": {
         "season": {
@@ -427,7 +432,8 @@
             "catchersInterference": 0,
             "sacBunts": 0,
             "sacFlies": 0
-          }
+          },
+          "live": false
         }
       }
     },
@@ -437,6 +443,7 @@
       "name_en": "Yuki Matsui",
       "position": "P",
       "team": "SD",
+      "league": "NL",
       "hitting": null,
       "pitching": {
         "season": {
@@ -570,7 +577,8 @@
             "catchersInterference": 0,
             "sacBunts": 0,
             "sacFlies": 0
-          }
+          },
+          "live": false
         }
       }
     },
@@ -580,6 +588,7 @@
       "name_en": "Munetaka Murakami",
       "position": "1B",
       "team": "CWS",
+      "league": "AL",
       "hitting": {
         "season": {
           "age": 26,
@@ -657,7 +666,8 @@
             "groundOutsToAirouts": "1.00",
             "catchersInterference": 0,
             "atBatsPerHomeRun": "-.--"
-          }
+          },
+          "live": false
         }
       },
       "pitching": null
@@ -668,6 +678,7 @@
       "name_en": "Rikuu Nishida",
       "position": "RF",
       "team": "CWS",
+      "league": "AL",
       "hitting": {
         "season": {
           "age": 25,
@@ -745,7 +756,8 @@
             "groundOutsToAirouts": "2.00",
             "catchersInterference": 0,
             "atBatsPerHomeRun": "-.--"
-          }
+          },
+          "live": false
         }
       },
       "pitching": null
@@ -756,6 +768,7 @@
       "name_en": "Shohei Ohtani",
       "position": "TWP",
       "team": "LAD",
+      "league": "NL",
       "hitting": {
         "season": {
           "age": 31,
@@ -833,7 +846,8 @@
             "groundOutsToAirouts": "1.00",
             "catchersInterference": 0,
             "atBatsPerHomeRun": "-.--"
-          }
+          },
+          "live": false
         }
       },
       "pitching": {
@@ -968,7 +982,8 @@
             "catchersInterference": 0,
             "sacBunts": 0,
             "sacFlies": 0
-          }
+          },
+          "live": false
         }
       }
     },
@@ -978,6 +993,7 @@
       "name_en": "Kazuma Okamoto",
       "position": "3B",
       "team": "TOR",
+      "league": "AL",
       "hitting": {
         "season": {
           "age": 30,
@@ -1055,7 +1071,8 @@
             "groundOutsToAirouts": "0.00",
             "catchersInterference": 0,
             "atBatsPerHomeRun": "3.00"
-          }
+          },
+          "live": false
         }
       },
       "pitching": null
@@ -1066,6 +1083,7 @@
       "name_en": "Roki Sasaki",
       "position": "P",
       "team": "LAD",
+      "league": "NL",
       "hitting": null,
       "pitching": {
         "season": {
@@ -1199,7 +1217,8 @@
             "catchersInterference": 0,
             "sacBunts": 0,
             "sacFlies": 0
-          }
+          },
+          "live": false
         }
       }
     },
@@ -1209,6 +1228,7 @@
       "name_en": "Kodai Senga",
       "position": "P",
       "team": "NYM",
+      "league": "NL",
       "hitting": null,
       "pitching": {
         "season": {
@@ -1342,7 +1362,8 @@
             "catchersInterference": 0,
             "sacBunts": 0,
             "sacFlies": 0
-          }
+          },
+          "live": false
         }
       }
     },
@@ -1352,6 +1373,7 @@
       "name_en": "Tomoyuki Sugano",
       "position": "P",
       "team": "COL",
+      "league": "NL",
       "hitting": null,
       "pitching": {
         "season": {
@@ -1485,7 +1507,8 @@
             "catchersInterference": 0,
             "sacBunts": 0,
             "sacFlies": 0
-          }
+          },
+          "live": false
         }
       }
     },
@@ -1495,6 +1518,7 @@
       "name_en": "Seiya Suzuki",
       "position": "RF",
       "team": "CHC",
+      "league": "NL",
       "hitting": {
         "season": {
           "age": 31,
@@ -1572,7 +1596,8 @@
             "groundOutsToAirouts": "0.00",
             "catchersInterference": 0,
             "atBatsPerHomeRun": "-.--"
-          }
+          },
+          "live": false
         }
       },
       "pitching": null
@@ -1583,6 +1608,7 @@
       "name_en": "Yoshinobu Yamamoto",
       "position": "P",
       "team": "LAD",
+      "league": "NL",
       "hitting": null,
       "pitching": {
         "season": {
@@ -1716,7 +1742,8 @@
             "catchersInterference": 0,
             "sacBunts": 0,
             "sacFlies": 0
-          }
+          },
+          "live": false
         }
       }
     },
@@ -1726,6 +1753,7 @@
       "name_en": "Masataka Yoshida",
       "position": "DH",
       "team": "BOS",
+      "league": "AL",
       "hitting": {
         "season": {
           "age": 32,
@@ -1803,7 +1831,8 @@
             "groundOutsToAirouts": "1.00",
             "catchersInterference": 0,
             "atBatsPerHomeRun": "-.--"
-          }
+          },
+          "live": false
         }
       },
       "pitching": null

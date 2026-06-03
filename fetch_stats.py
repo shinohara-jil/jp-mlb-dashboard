@@ -43,6 +43,17 @@ def load_name_map():
         return {}
 
 
+def load_team_league():
+    """チーム略称→リーグ（AL/NL）の固定対応表を読み込む。先頭の説明キーは除外。"""
+    path = os.path.join(CONFIG_DIR, "team_league.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return {k: v for k, v in data.items() if not k.startswith("_")}
+    except FileNotFoundError:
+        return {}
+
+
 def get_japanese_players(season):
     """その季にMLBに在籍する『日本出身』の選手一覧を返す。"""
     url = f"{API}/sports/1/players?season={season}"
@@ -68,27 +79,33 @@ def fetch_season_stat(pid, group, season):
     return None
 
 
-_game_date_cache = {}
+_game_info_cache = {}
 
 
-def get_game_jst_date(game_pk):
-    """gamePk から試合開始時刻を取得し、日本時間の日付(YYYY-MM-DD)を返す。失敗時 None。"""
+def get_game_info(game_pk):
+    """gamePk から試合の日本時間日付と進行状態を取得する。
+    戻り値: {"date": "YYYY-MM-DD" or None, "live": True/False}
+    live=True は試合が進行中（abstractGameState == "Live"）の意味。"""
+    empty = {"date": None, "live": False}
     if game_pk is None:
-        return None
-    if game_pk in _game_date_cache:
-        return _game_date_cache[game_pk]
-    result = None
+        return empty
+    if game_pk in _game_info_cache:
+        return _game_info_cache[game_pk]
+    result = dict(empty)
     try:
         data = get_json(f"{API}/schedule?gamePks={game_pk}")
         for d in data.get("dates", []):
             for g in d.get("games", []):
-                if g.get("gamePk") == game_pk and g.get("gameDate"):
-                    dt = datetime.fromisoformat(g["gameDate"].replace("Z", "+00:00"))
-                    jst = dt + timedelta(hours=9)
-                    result = jst.strftime("%Y-%m-%d")
+                if g.get("gamePk") == game_pk:
+                    if g.get("gameDate"):
+                        dt = datetime.fromisoformat(g["gameDate"].replace("Z", "+00:00"))
+                        jst = dt + timedelta(hours=9)
+                        result["date"] = jst.strftime("%Y-%m-%d")
+                    state = g.get("status", {}).get("abstractGameState", "")
+                    result["live"] = (state == "Live")
     except Exception:
-        result = None
-    _game_date_cache[game_pk] = result
+        result = dict(empty)
+    _game_info_cache[game_pk] = result
     return result
 
 
@@ -100,16 +117,17 @@ def fetch_latest_game(pid, group, season):
     if stats and stats[0].get("splits"):
         last = stats[0]["splits"][-1]
         game_pk = last.get("game", {}).get("gamePk")
-        jst_date = get_game_jst_date(game_pk)
+        info = get_game_info(game_pk)
         return {
-            "date": jst_date or last.get("date"),  # 日本時間（取れない時は元の日付）
+            "date": info["date"] or last.get("date"),  # 日本時間（取れない時は元の日付）
             "opponent": last.get("opponent", {}).get("name"),
             "stat": last.get("stat", {}),
+            "live": info["live"],  # True=試合中（途中経過）
         }
     return None
 
 
-def build_player_data(player, name_map, season, team_map):
+def build_player_data(player, name_map, season, team_map, league_map):
     """1選手分の表示用データを組み立てる。今季成績が無ければ None（=非表示）。"""
     pid = player["id"]
     name_en = player.get("fullName", "")
@@ -119,6 +137,7 @@ def build_player_data(player, name_map, season, team_map):
     is_two_way = pos == "TWP"
     team_id = player.get("currentTeam", {}).get("id")
     team = team_map.get(team_id, "")
+    league = league_map.get(team, "")  # AL / NL（不明なら空）
 
     result = {
         "id": pid,
@@ -126,6 +145,7 @@ def build_player_data(player, name_map, season, team_map):
         "name_en": name_en,
         "position": pos,
         "team": team,
+        "league": league,
         "hitting": None,
         "pitching": None,
     }
@@ -160,6 +180,7 @@ def build_player_data(player, name_map, season, team_map):
 def fetch_all(limit=None):
     season = current_season()
     name_map = load_name_map()
+    league_map = load_team_league()
     team_map = get_team_abbr_map(season)
     players = get_japanese_players(season)
     if limit:
@@ -168,7 +189,7 @@ def fetch_all(limit=None):
     results = []
     for p in players:
         try:
-            data = build_player_data(p, name_map, season, team_map)
+            data = build_player_data(p, name_map, season, team_map, league_map)
             if data:
                 results.append(data)
                 print(f"  取得OK: {data['name_ja']} ({data['position']})")

@@ -7,6 +7,7 @@
 - [要件定義書](10-product/requirements.md) — 何を作るか・なぜ作るか
 - [改修計画（進化ロードマップ）](10-product/roadmap.md) — 今後やりたいこと一覧と難易度・進め方
 - [① 画像（選手の顔写真）詳細要件](10-product/feature-01-images.md) — 顔写真の取得元・置き方・対象ファイル
+- [⑥リーグ絞り込み＋⑦試合中タグ 要件・実装メモ](10-product/feature-06-07-league-and-live.md) — リーグ絞り込みと試合中タグの要件と実装内容
 
 ## 20-design（設計・アーキテクチャ）
 
