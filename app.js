@@ -347,12 +347,12 @@ function renderHighlights(players) {
       const hr = (ls.homeRuns || 0) >= 1 ? ` ${ls.homeRuns}本塁打` : "";
       const rbi = (ls.rbi || 0) >= 1 ? ` ${ls.rbi}打点` : "";
       const fire = isHotHitting(p.hitting.latest) ? " 🔥" : "";
-      rows.push(`${avatar(p, "avatar-mini")}<span class="h-name">${p.name_ja}</span> ${ls.atBats ?? 0}打数${ls.hits ?? 0}安打${hr}${rbi}${fire}`);
+      rows.push(`${avatar(p, "avatar-mini")}<span class="h-name">${p.name_ja}</span>${liveTag(p.hitting.latest)} ${ls.atBats ?? 0}打数${ls.hits ?? 0}安打${hr}${rbi}${fire}`);
     }
     if (p.pitching && p.pitching.latest && p.pitching.latest.date === maxDate) {
       const ls = p.pitching.latest.stat;
       const fire = isHotPitching(p.pitching.latest) ? " 🔥" : "";
-      rows.push(`${avatar(p, "avatar-mini")}<span class="h-name">${p.name_ja}</span> ${ls.inningsPitched ?? 0}回 ${ls.earnedRuns ?? 0}失点 ${ls.strikeOuts ?? 0}奪三振${decision(ls)}${fire}`);
+      rows.push(`${avatar(p, "avatar-mini")}<span class="h-name">${p.name_ja}</span>${liveTag(p.pitching.latest)} ${ls.inningsPitched ?? 0}回 ${ls.earnedRuns ?? 0}失点 ${ls.strikeOuts ?? 0}奪三振${decision(ls)}${fire}`);
     }
   });
   const html = rows.length
