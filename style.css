@@ -105,9 +105,13 @@ body {
   padding: 14px 18px;
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
-.highlight-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 15px; border-bottom: 1px solid #eef1f4; }
+.highlight-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: 15px; border-bottom: 1px solid #eef1f4; }
 .highlight-row:last-child { border-bottom: none; }
-.highlight-row .h-name { font-weight: 700; color: var(--navy); }
+/* 名前＋試合中タグ＋成績をひとまとめにして、狭い画面でも自然に折り返す */
+.highlight-row .h-body { min-width: 0; flex: 1; line-height: 1.5; }
+.highlight-row .h-name { font-weight: 700; color: var(--navy); margin-right: 6px; white-space: nowrap; }
+.highlight-row .h-stat { word-break: normal; overflow-wrap: anywhere; }
+.highlight-row .avatar-mini { margin-top: 2px; }
 .highlight-empty { color: var(--muted); }
 
 /* ===== 顔写真（丸） ===== */

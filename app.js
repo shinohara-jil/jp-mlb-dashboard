@@ -8,6 +8,14 @@ const $ = (id) => document.getElementById(id);
 
 let currentData = null;        // 直近に読み込んだ全データ（絞り込みの元）
 let currentLeague = "ALL";     // 選択中のリーグ（ALL / AL / NL）
+const LS_KEY = "mlb_jp_last_update"; // この端末で最後に「🔄更新」した結果の保存先
+
+// 2つのデータのうち、更新日時が新しい方を返す（updated_at は "YYYY-MM-DD HH:MM" 形式で文字列比較できる）
+function pickNewer(a, b) {
+  if (!a) return b || null;
+  if (!b) return a;
+  return (b.updated_at || "") > (a.updated_at || "") ? b : a;
+}
 
 window.addEventListener("DOMContentLoaded", () => {
   loadSaved();
@@ -24,14 +32,26 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 // ===== 保存済みデータの読み込み（高速表示）=====
+// 「毎朝の自動更新で保存されたファイル」と「この端末で前回🔄更新した結果」の
+// 新しい方を表示する。これで手動更新が開き直しても残り、かつ自動更新が新しければそちらを優先。
 async function loadSaved() {
+  let serverData = null;
   try {
     const res = await fetch("data/latest.json", { cache: "no-store" });
-    if (!res.ok) throw new Error("no data");
-    const data = await res.json();
+    if (res.ok) serverData = await res.json();
+  } catch (e) { /* 取れなければ後でライブ取得 */ }
+
+  let localData = null;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) localData = JSON.parse(raw);
+  } catch (e) { /* 保存が壊れていれば無視 */ }
+
+  const data = pickNewer(serverData, localData);
+  if (data) {
     render(data);
-  } catch (e) {
-    // 保存データが無ければ、その場で取得を試みる
+  } else {
+    // どちらも無ければ、その場で取得を試みる
     setStatus("保存データがありません。最新を取得します…");
     liveUpdate();
   }
@@ -44,6 +64,8 @@ async function liveUpdate() {
   setStatus("MLB公式サービスから最新成績を取得しています…（数秒〜十数秒かかります）");
   try {
     const data = await fetchAll();
+    // この端末に記憶（開き直しても残るように）
+    try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (e) { /* 容量超過等は無視 */ }
     render(data);
     setStatus("");
   } catch (e) {
@@ -347,12 +369,14 @@ function renderHighlights(players) {
       const hr = (ls.homeRuns || 0) >= 1 ? ` ${ls.homeRuns}本塁打` : "";
       const rbi = (ls.rbi || 0) >= 1 ? ` ${ls.rbi}打点` : "";
       const fire = isHotHitting(p.hitting.latest) ? " 🔥" : "";
-      rows.push(`${avatar(p, "avatar-mini")}<span class="h-name">${p.name_ja}</span>${liveTag(p.hitting.latest)} ${ls.atBats ?? 0}打数${ls.hits ?? 0}安打${hr}${rbi}${fire}`);
+      const stat = `${ls.atBats ?? 0}打数${ls.hits ?? 0}安打${hr}${rbi}${fire}`;
+      rows.push(`${avatar(p, "avatar-mini")}<div class="h-body"><span class="h-name">${p.name_ja}</span>${liveTag(p.hitting.latest)}<span class="h-stat">${stat}</span></div>`);
     }
     if (p.pitching && p.pitching.latest && p.pitching.latest.date === maxDate) {
       const ls = p.pitching.latest.stat;
       const fire = isHotPitching(p.pitching.latest) ? " 🔥" : "";
-      rows.push(`${avatar(p, "avatar-mini")}<span class="h-name">${p.name_ja}</span>${liveTag(p.pitching.latest)} ${ls.inningsPitched ?? 0}回 ${ls.earnedRuns ?? 0}失点 ${ls.strikeOuts ?? 0}奪三振${decision(ls)}${fire}`);
+      const stat = `${ls.inningsPitched ?? 0}回 ${ls.earnedRuns ?? 0}失点 ${ls.strikeOuts ?? 0}奪三振${decision(ls)}${fire}`;
+      rows.push(`${avatar(p, "avatar-mini")}<div class="h-body"><span class="h-name">${p.name_ja}</span>${liveTag(p.pitching.latest)}<span class="h-stat">${stat}</span></div>`);
     }
   });
   const html = rows.length
