@@ -38,6 +38,8 @@ docs/             … 要件・設計・実装・運用ドキュメント
 - GitHub Pages はURLに階層が付く（`https://<user>.github.io/<repo>/`）ため、
   HTML内の参照は**相対パス**（`style.css` / `app.js` / `data/latest.json`）にすること。先頭スラッシュ禁止。
 - サイトファイルはリポジトリ**直下**に置く（Pagesは `main` ブランチのルートを配信）。`docs/` は別用途なので使わない。
+- **キャッシュ対策**：`index.html` は `app.js?v=日付` / `style.css?v=日付` の形でバージョン印を付けている。
+  **`app.js` または `style.css` を更新したら、`index.html` の `?v=` の日付も必ず更新する**こと（古いファイルがブラウザに残って反映されない事故を防ぐ）。
 
 ## データの取得元
 
