@@ -1,12 +1,18 @@
-// 大谷翔平 シーズン推移ページの動き
+// 選手のシーズン推移ページの動き（全選手共通）
 //  - 今シーズンの「試合ごとログ」をMLB公式から取得
 //  - 各項目を上下2段で表示：上段=移り変わり(折れ線) / 下段=1試合ごと(棒)
-//  - 「投手」「野手」をタブで切り替え
+//  - 「投手」「野手」をタブで切り替え（その選手に記録がある側だけ表示）
+//  - どの選手かはURLの ?id= で受け取る（指定が無ければ大谷翔平）
 //  （※静的サイト用。裏方サーバーは不要）
 
 const API = "https://statsapi.mlb.com/api/v1";
-const OHTANI_ID = 660271; // 大谷翔平のMLB選手ID（固定）
+const DEFAULT_ID = 660271; // 指定が無いときの既定（大谷翔平）
 const $ = (id) => document.getElementById(id);
+
+// URLから「どの選手か」を受け取る。?id= が選手ID、?name= が日本語名（一覧から渡される）。
+const _params = new URLSearchParams(location.search);
+const PLAYER_ID = parseInt(_params.get("id"), 10) || DEFAULT_ID;
+let PLAYER_NAME = _params.get("name") || (PLAYER_ID === DEFAULT_ID ? "大谷 翔平" : "");
 
 let SPLITS = { pitching: null, hitting: null }; // 取得した試合ごとログ
 let charts = [];                                 // 表示中のグラフ（切替時に破棄する）
@@ -80,10 +86,36 @@ const PIT_METRICS = [
 
 // ===== データ取得 =====
 async function fetchGameLog(group, season) {
-  const data = await getJson(`${API}/people/${OHTANI_ID}/stats?stats=gameLog&group=${group}&season=${season}`);
+  const data = await getJson(`${API}/people/${PLAYER_ID}/stats?stats=gameLog&group=${group}&season=${season}`);
   const st = data.stats || [];
   if (st.length && st[0].splits && st[0].splits.length) return st[0].splits;
   return [];
+}
+
+// 名前がURLで渡されなかった時だけ、MLBから選手名（英語）を1回引いて補う
+async function fetchPlayerName() {
+  try {
+    const data = await getJson(`${API}/people/${PLAYER_ID}`);
+    const person = (data.people || [])[0] || {};
+    return person.fullName || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+// 見出し・顔写真・ページタイトルを、選んだ選手に合わせて差し替える
+function applyPlayerIdentity() {
+  const name = PLAYER_NAME || "選手";
+  const h1 = $("page-title");
+  if (h1) h1.textContent = name + " シーズン推移";
+  const intro = $("intro-name");
+  if (intro) intro.firstChild ? (intro.firstChild.textContent = name + " ") : (intro.textContent = name);
+  const av = $("player-avatar");
+  if (av) {
+    av.src = `https://midfield.mlbstatic.com/v1/people/${PLAYER_ID}/spots/120`;
+    av.alt = name;
+  }
+  document.title = `${name} シーズン推移 ｜ 日本人メジャーリーガー成績ダッシュボード`;
 }
 
 // ===== 起動 =====
@@ -92,6 +124,11 @@ window.addEventListener("DOMContentLoaded", init);
 async function init() {
   const season = currentSeason();
   $("season").textContent = "シーズン: " + season;
+
+  // 名前がURLで渡っていなければ、先にMLBから補ってから見出しを整える
+  if (!PLAYER_NAME) PLAYER_NAME = await fetchPlayerName();
+  applyPlayerIdentity();
+
   setStatus("成績を取得しています…（数秒かかります）");
 
   try {
@@ -107,17 +144,32 @@ async function init() {
     return;
   }
 
-  // タブの動き
+  const hasPit = !!(SPLITS.pitching && SPLITS.pitching.length);
+  const hasHit = !!(SPLITS.hitting && SPLITS.hitting.length);
+
+  // どちらの記録も無い選手（故障中など）
+  if (!hasPit && !hasHit) {
+    document.getElementById("tabs").style.display = "none";
+    $("charts").innerHTML = `<div class="highlight-empty">今シーズンの記録はまだありません。</div>`;
+    return;
+  }
+
+  // その選手に記録がある側のタブだけ表示する（投手専任なら投手だけ、野手なら野手だけ）。
+  // 片方しか無ければタブ自体を隠す（切り替える必要がないため）。
+  const tabBar = document.getElementById("tabs");
   document.querySelectorAll("#tabs .tab-btn").forEach((btn) => {
+    const has = btn.dataset.group === "pitching" ? hasPit : hasHit;
+    btn.style.display = has ? "" : "none";
     btn.addEventListener("click", () => showTab(btn.dataset.group));
   });
+  if (!(hasPit && hasHit)) tabBar.style.display = "none";
 
   // どのタブで開くか：一覧のボタンが付けた ?tab=pitching/hitting を優先。
   // 指定が無い／その種類の記録がまだ無ければ、記録のある側を表示する。
-  const requested = new URLSearchParams(location.search).get("tab");
+  const requested = _params.get("tab");
   let first = (requested === "pitching" || requested === "hitting") ? requested : "pitching";
   if (!(SPLITS[first] && SPLITS[first].length)) {
-    first = (SPLITS.pitching && SPLITS.pitching.length) ? "pitching" : "hitting";
+    first = hasPit ? "pitching" : "hitting";
   }
   showTab(first);
 }

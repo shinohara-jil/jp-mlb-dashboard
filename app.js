@@ -250,10 +250,12 @@ function leagueLabel(code) {
 
 function emptyMsg(text) { return `<div class="highlight-empty">${text}</div>`; }
 function teamTag(p) { return p.team ? `<span class="card-team">${p.team}</span>` : ""; }
-// 大谷翔平だけ、成績の推移ページへのボタンを出す（ID 660271 で判定）
-// group="pitching" / "hitting" を渡すと、その種類のタブで推移ページを開く
+// 各選手カードに、成績の推移ページへのボタンを出す（全選手対象）。
+// group="pitching" / "hitting" を渡すと、その種類のタブで推移ページを開く。
+// 選手ID(id)と日本語名(name)をURLで渡し、推移ページ側がそのまま使えるようにする。
 function trendButton(p, group) {
-  return p.id === 660271 ? `<a class="trend-btn" href="ohtani.html?tab=${group}">📈 推移を見る</a>` : "";
+  const name = encodeURIComponent(p.name_ja || p.name_en || "");
+  return `<a class="trend-btn" href="ohtani.html?id=${p.id}&tab=${group}&name=${name}">📈 推移を見る</a>`;
 }
 // 直近試合が進行中なら「🟢 試合中」タグを返す（カードのみで使用）
 function liveTag(latest) { return (latest && latest.live) ? `<span class="live-tag">🟢 試合中</span>` : ""; }
