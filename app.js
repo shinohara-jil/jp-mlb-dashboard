@@ -250,6 +250,11 @@ function leagueLabel(code) {
 
 function emptyMsg(text) { return `<div class="highlight-empty">${text}</div>`; }
 function teamTag(p) { return p.team ? `<span class="card-team">${p.team}</span>` : ""; }
+// 大谷翔平だけ、成績の推移ページへのボタンを出す（ID 660271 で判定）
+// group="pitching" / "hitting" を渡すと、その種類のタブで推移ページを開く
+function trendButton(p, group) {
+  return p.id === 660271 ? `<a class="trend-btn" href="ohtani.html?tab=${group}">📈 推移を見る</a>` : "";
+}
 // 直近試合が進行中なら「🟢 試合中」タグを返す（カードのみで使用）
 function liveTag(latest) { return (latest && latest.live) ? `<span class="live-tag">🟢 試合中</span>` : ""; }
 
@@ -312,6 +317,7 @@ function pitcherCard(p) {
       ${statCell(s.inningsPitched, "投球回")}
       ${statCell(s.whip, "WHIP")}
     </div>
+    ${trendButton(p, "pitching")}
   </div>`;
 }
 
@@ -352,6 +358,7 @@ function batterCard(p) {
       ${statCell(s.obp, "出塁率")}
       ${statCell(s.stolenBases, "盗塁")}
     </div>
+    ${trendButton(p, "hitting")}
   </div>`;
 }
 

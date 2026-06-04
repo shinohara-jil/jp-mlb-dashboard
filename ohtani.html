@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大谷翔平 シーズン推移 ｜ 日本人メジャーリーガー成績ダッシュボード</title>
+  <link rel="stylesheet" href="style.css?v=2026-06-04b">
+  <link rel="stylesheet" href="ohtani.css?v=2026-06-04b">
+  <meta name="theme-color" content="#1B3A5C">
+
+  <!-- グラフ表示部品（Chart.js）。オンライン時のみ読み込む。 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <h1>📈 大谷翔平 シーズン推移</h1>
+      <div class="header-right">
+        <span id="season" class="updated">シーズン: —</span>
+        <a href="index.html" class="update-btn back-link">← 一覧に戻る</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div id="status" class="status"></div>
+
+    <div class="ohtani-intro">
+      <img class="avatar avatar-card" src="https://midfield.mlbstatic.com/v1/people/660271/spots/120" alt="大谷翔平"
+           onerror="this.onerror=null;this.style.visibility='hidden'">
+      <div>
+        <div class="intro-name">大谷 翔平 <span class="intro-sub">今シーズンの成績の移り変わり</span></div>
+        <div class="intro-note">上段＝シーズンを通した移り変わり（折れ線）／下段＝1試合ごと（棒）</div>
+      </div>
+    </div>
+
+    <div id="tabs" class="ohtani-tabs" role="group" aria-label="投手・野手の切り替え">
+      <button class="tab-btn is-active" data-group="pitching">⚾ 投手</button>
+      <button class="tab-btn" data-group="hitting">🏏 野手</button>
+    </div>
+
+    <div id="charts" class="charts-area"></div>
+  </main>
+
+  <footer class="footer">
+    データ提供: MLB公式 StatsAPI ／ グラフ: Chart.js
+  </footer>
+
+  <!-- ?v=日付 はキャッシュ対策。ohtani.js / ohtani.css を更新したらこの日付も合わせて変えること -->
+  <script src="ohtani.js?v=2026-06-04b"></script>
+</body>
+</html>

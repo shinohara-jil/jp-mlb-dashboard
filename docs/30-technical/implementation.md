@@ -68,6 +68,22 @@
 - **キャッシュ対策は `?v=日付` に一本化**（従来どおり。サービスワーカーは使わない）。パスは相対（`./`）。
 - 詳細・取り下げの経緯は [feature-05-pwa.md](../10-product/feature-05-pwa.md)。
 
+## ⑧ 大谷翔平 成績推移ページ 2026-06-04 追加
+
+- **追加ファイル**：`ohtani.html`（推移ページ本体）／`ohtani.js`（取得・グラフ描画）／`ohtani.css`（専用スタイル）。
+- **グラフ**：Chart.js を CDN（`cdn.jsdelivr.net/npm/chart.js@4`）から読み込み。オンライン時のみ動作（既存サイトもオンライン前提のため許容）。
+- **対象**：大谷翔平のみ。選手ID `660271` を固定で使う（`ohtani.js` の `OHTANI_ID`）。
+- **データ**：`/people/660271/stats?stats=gameLog&group=hitting|pitching&season=YYYY` を投手・野手の両方取得。今シーズンのみ。
+- **割合系（avg/ops/era/whip）はgameLogの各試合の値が「その時点の通算値」**であることを確認済み。上段（移り変わり）の折れ線にそのまま使える。
+  - **数えるもの（HR/RBI/SB/奪三振）の累計**は per-game の値を `ohtani.js` 側で running sum して算出。
+  - **投球回の累計**は "6.1"=6⅓回 表記のため、`ipToOuts()` でアウト数に直して合算（単純な小数加算では誤るため）。
+- **上下2段の見せ方**：項目ごとに上＝折れ線（累計／通算値）、下＝棒（1試合ごと）。割合系の下段は「元になる数」を棒で表示：
+  - 打率→安打数／OPS→塁打数／防御率→自責点／WHIP→与四球+被安打。
+- **タブ**：投手・野手を `showTab()` で切り替え。切替時に既存 Chart を `destroy()` してから再描画（二重描画・メモリ増加を防ぐ）。登板/出場がまだ無い側はメッセージ表示。
+- **一覧からの入口**：`app.js` の `trendButton(p)` が大谷（id 660271）のカードにだけ「📈 推移を見る」リンク（`ohtani.html`）を出す。投手・野手の両カードに表示。
+- **キャッシュ対策**：`ohtani.html` の `?v=` と、編集した `app.js`/`style.css` を読む `index.html` の `?v=` を更新（→ `2026-06-04c`）。
+- 要件・画面イメージは [feature-08-ohtani-trend.md](../10-product/feature-08-ohtani-trend.md)。
+
 ## 今後の拡張余地
 
 - 毎朝の自動更新（スケジューラで `fetch_stats.fetch_and_save()` を定期実行）。

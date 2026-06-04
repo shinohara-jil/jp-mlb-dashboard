@@ -1,0 +1,78 @@
+/* 大谷翔平 シーズン推移ページ専用のスタイル（共通の style.css に追加して使う） */
+
+.back-link { display: inline-flex; align-items: center; text-decoration: none; }
+
+/* ===== 上部の選手紹介 ===== */
+.ohtani-intro {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card);
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  margin-bottom: 16px;
+}
+.intro-name { font-size: 18px; font-weight: 700; color: var(--navy); }
+.intro-sub { font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+.intro-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ===== 投手・野手タブ ===== */
+.ohtani-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+.tab-btn {
+  background: #fff;
+  color: var(--navy);
+  border: 1px solid #d4dbe4;
+  border-radius: 999px;
+  padding: 8px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.tab-btn:hover { border-color: var(--blue); }
+.tab-btn.is-active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+/* ===== グラフ群 ===== */
+/* min(100%, 320px)：画面が320pxより狭いときは列幅を画面いっぱい(100%)にして、
+   枠が画面からはみ出さないようにする（狭いスマホでの横スクロール防止） */
+.charts-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.metric {
+  min-width: 0;                  /* グラフの既定幅に押し広げられないように縮められる状態にする */
+  background: var(--card);
+  border-radius: 10px;
+  padding: 14px 16px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.metric-title {
+  font-size: 16px;
+  color: var(--navy);
+  border-left: 5px solid var(--blue);
+  padding-left: 10px;
+  margin: 0 0 10px;
+}
+.chart-panel { margin-top: 8px; }
+.panel-label { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.canvas-wrap { position: relative; height: 150px; min-width: 0; }
+
+/* ===== 直近の試合の表 ===== */
+.recent-table {
+  grid-column: 1 / -1;            /* 表は横いっぱいに */
+  min-width: 0;
+  overflow-x: auto;               /* 内容が広い時は表だけ横スクロール（ページははみ出さない） */
+  background: var(--card);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.recent-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.recent-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.recent-table th, .recent-table td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #eef1f4; }
+.recent-table th { color: var(--muted); font-weight: 600; font-size: 13px; }
+.recent-table td.opp { color: var(--text); }
+.recent-table tr:last-child td { border-bottom: none; }
+
+@media (max-width: 600px) {
+  .charts-area { grid-template-columns: 1fr; }
+  .header h1 { font-size: 17px; }
+}
