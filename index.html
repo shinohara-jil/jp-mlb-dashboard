@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>日本人メジャーリーガー成績ダッシュボード</title>
   <link rel="stylesheet" href="style.css?v=2026-06-04">
+
+  <!-- PWA（ホーム画面に置けるアプリ風）設定 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1B3A5C">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="日本人MLB成績">
 </head>
 <body>
   <header class="header">
@@ -49,5 +57,15 @@
 
   <!-- ?v=日付 はキャッシュ対策。app.js / style.css を更新したらこの日付も合わせて変えること（古いファイルが読まれるのを防ぐ） -->
   <script src="app.js?v=2026-06-04"></script>
+
+  <!-- 以前のオフライン機能(サービスワーカー)は廃止。古い登録を解除し、残ったキャッシュを掃除する。 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
+    }
+    if (window.caches && caches.keys) {
+      caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+    }
+  </script>
 </body>
 </html>

@@ -57,6 +57,15 @@
 - **リーグ（AL/NL）は固定対応表**：`config/team_league.json` にチーム略称→リーグを持ち、各選手に `league` を付与。MLB APIから動的に引くことも可能だが、予測しやすさ重視で固定表を採用（球団増減時のみ手直し）。画面の絞り込みボタンで `league` を使って表示を絞る。
 - **「試合中」判定は `/schedule` の `status.abstractGameState`**（`Preview`/`Live`/`Final`）。試合日取得と同じ schedule 呼び出しから一緒に読み、最新試合に `live` を付与。`Live` のときカードに「🟢 試合中」タグを表示。fetch_stats.py（毎朝）と app.js（🔄ボタン）の両方に実装。
 
+## PWA（アプリ風）2026-06-04 追加
+
+- **追加ファイル**：`manifest.json`（アプリ名・アイコン・全画面起動）／アイコン各種（`icon-192.png`・`icon-512.png`・`icon-maskable-512.png`・`apple-touch-icon.png`）。
+- **index.html の変更**：manifest 読み込み・`theme-color`・Apple向けメタタグを追加。
+- **オフライン機能（サービスワーカー）は取り下げ**：キャッシュ由来で「英語名・空表示・更新日—」になる不具合が出たため。
+  `sw.js` は現在「自分の登録解除＋全キャッシュ削除＋再読み込み」の後始末専用。index.html 側でも登録解除・キャッシュ削除を実行。
+- **キャッシュ対策は `?v=日付` に一本化**（従来どおり。サービスワーカーは使わない）。パスは相対（`./`）。
+- 詳細・取り下げの経緯は [feature-05-pwa.md](../10-product/feature-05-pwa.md)。
+
 ## 今後の拡張余地
 
 - 毎朝の自動更新（スケジューラで `fetch_stats.fetch_and_save()` を定期実行）。
