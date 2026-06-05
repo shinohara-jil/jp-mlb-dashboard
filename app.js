@@ -249,13 +249,23 @@ function leagueLabel(code) {
 }
 
 function emptyMsg(text) { return `<div class="highlight-empty">${text}</div>`; }
-function teamTag(p) { return p.team ? `<span class="card-team">${p.team}</span>` : ""; }
+// カード上部（顔写真＋名前＋チーム名を名前の下に小さく）
+function cardHead(p) {
+  const team = p.team ? `<span class="card-team">${p.team}</span>` : "";
+  return `<div class="card-head">${avatar(p, "avatar-card")}<div class="card-id-text"><span class="card-name">${p.name_ja}</span>${team}</div></div>`;
+}
+// シーズン通算をテーブル（見出し行＋数値行）で表示する。pairs は [値, ラベル] の配列。
+function statTable(pairs) {
+  const th = pairs.map((x) => `<th>${x[1]}</th>`).join("");
+  const td = pairs.map((x) => `<td>${x[0] ?? "—"}</td>`).join("");
+  return `<table class="stat-table"><thead><tr>${th}</tr></thead><tbody><tr>${td}</tr></tbody></table>`;
+}
 // 各選手カードに、成績の推移ページへのボタンを出す（全選手対象）。
 // group="pitching" / "hitting" を渡すと、その種類のタブで推移ページを開く。
 // 選手ID(id)と日本語名(name)をURLで渡し、推移ページ側がそのまま使えるようにする。
 function trendButton(p, group) {
   const name = encodeURIComponent(p.name_ja || p.name_en || "");
-  return `<a class="trend-btn" href="ohtani.html?id=${p.id}&tab=${group}&name=${name}">📈 推移を見る</a>`;
+  return `<a class="trend-btn" href="ohtani.html?id=${p.id}&tab=${group}&name=${name}">推移を見る →</a>`;
 }
 // 直近試合が進行中なら「🟢 試合中」タグを返す（カードのみで使用）
 function liveTag(latest) { return (latest && latest.live) ? `<span class="live-tag">🟢 試合中</span>` : ""; }
@@ -288,10 +298,6 @@ function isHotPitching(latest) {
   return (s.wins || 0) >= 1 || (s.saves || 0) >= 1 || (ip >= 5 && (s.earnedRuns || 0) <= 1);
 }
 
-function statCell(value, label) {
-  return `<div class="stat"><b>${value ?? "—"}</b><span>${label}</span></div>`;
-}
-
 function pitcherCard(p) {
   const s = p.pitching.season || {};
   const latest = p.pitching.latest;
@@ -300,25 +306,24 @@ function pitcherCard(p) {
   if (latest) {
     const ls = latest.stat || {};
     const fire = hot ? ' <span class="fire">🔥</span>' : "";
-    latestHtml = `<div class="latest-line"><span class="date">${latest.date}</span>` +
+    latestHtml = `<div class="latest-line"><span class="latest-label">最新登板 ${latest.date}${liveTag(latest)}</span>` +
       `${ls.inningsPitched ?? "0"}回 ${ls.earnedRuns ?? 0}失点 ${ls.strikeOuts ?? 0}奪三振${decision(ls)}${fire}</div>`;
   } else {
-    latestHtml = `<div class="latest-none">登板なし</div>`;
+    latestHtml = `<div class="latest-line"><span class="latest-label">最新登板</span><span class="latest-none">登板なし</span></div>`;
   }
   return `
   <div class="card ${hot ? "hot" : ""}">
-    <div class="card-head"><div class="card-id">${avatar(p, "avatar-card")}<span class="card-name">${p.name_ja}</span></div>${teamTag(p)}</div>
-    <div class="block-label">最新登板 ${liveTag(latest)}</div>
+    ${cardHead(p)}
     ${latestHtml}
-    <div class="block-label">シーズン通算</div>
-    <div class="stat-row">
-      ${statCell(s.era, "防御率")}
-      ${statCell((s.wins ?? 0) + "-" + (s.losses ?? 0), "勝敗")}
-      ${statCell(s.saves, "S")}
-      ${statCell(s.strikeOuts, "奪三振")}
-      ${statCell(s.inningsPitched, "投球回")}
-      ${statCell(s.whip, "WHIP")}
-    </div>
+    <div class="stat-caption">シーズン通算</div>
+    ${statTable([
+      [s.era, "防御率"],
+      [(s.wins ?? 0) + "-" + (s.losses ?? 0), "勝敗"],
+      [s.saves, "S"],
+      [s.strikeOuts, "奪三振"],
+      [s.inningsPitched, "投球回"],
+      [s.whip, "WHIP"],
+    ])}
     ${trendButton(p, "pitching")}
   </div>`;
 }
@@ -341,25 +346,24 @@ function batterCard(p) {
     const fire = hot ? ' <span class="fire">🔥</span>' : "";
     const hr = (ls.homeRuns || 0) >= 1 ? ` ${ls.homeRuns}本塁打` : "";
     const rbi = (ls.rbi || 0) >= 1 ? ` ${ls.rbi}打点` : "";
-    latestHtml = `<div class="latest-line"><span class="date">${latest.date}</span>` +
+    latestHtml = `<div class="latest-line"><span class="latest-label">最新試合 ${latest.date}${liveTag(latest)}</span>` +
       `${ls.atBats ?? 0}打数${ls.hits ?? 0}安打${hr}${rbi}${fire}</div>`;
   } else {
-    latestHtml = `<div class="latest-none">出場なし</div>`;
+    latestHtml = `<div class="latest-line"><span class="latest-label">最新試合</span><span class="latest-none">出場なし</span></div>`;
   }
   return `
   <div class="card ${hot ? "hot" : ""}">
-    <div class="card-head"><div class="card-id">${avatar(p, "avatar-card")}<span class="card-name">${p.name_ja}</span></div>${teamTag(p)}</div>
-    <div class="block-label">最新試合 ${liveTag(latest)}</div>
+    ${cardHead(p)}
     ${latestHtml}
-    <div class="block-label">シーズン通算</div>
-    <div class="stat-row">
-      ${statCell(s.avg, "打率")}
-      ${statCell(s.homeRuns, "本塁打")}
-      ${statCell(s.rbi, "打点")}
-      ${statCell(s.ops, "OPS")}
-      ${statCell(s.obp, "出塁率")}
-      ${statCell(s.stolenBases, "盗塁")}
-    </div>
+    <div class="stat-caption">シーズン通算</div>
+    ${statTable([
+      [s.avg, "打率"],
+      [s.homeRuns, "本塁打"],
+      [s.rbi, "打点"],
+      [s.ops, "OPS"],
+      [s.obp, "出塁率"],
+      [s.stolenBases, "盗塁"],
+    ])}
     ${trendButton(p, "hitting")}
   </div>`;
 }
