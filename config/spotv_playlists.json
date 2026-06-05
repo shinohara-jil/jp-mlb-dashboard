@@ -1,0 +1,9 @@
+{
+  "_comment": "選手ID(MLB) → SPOTV NOW公式YouTubeの『選手別 再生リストID』の対応表。動画は試合ごとに新しく作られIDが変わるが、再生リストIDは固定。ここに登録しておけば、再生リストの中身（最新のダイジェスト動画）はSPOTV NOW側の追加に自動で追従する。出典: SPOTV NOW公式YouTube (@SPOTVNOW_JP)。公式シリーズの再生リストIDは PLDfB2rHFTxI で始まる（プレイバック!! / 2026 選手名 など）。",
+  "_how_to_add": "YouTubeでSPOTV NOW公式チャンネル → 再生リスト → 対象選手のリストを開き、URL中の list= の後ろの文字列を、選手IDのキーに対する値として追加する。",
+  "660271": "PLDfB2rHFTxIssxn0c3Ccvh6zw0xQKxYOq",
+  "808967": "PLDfB2rHFTxIs62JcUGEnT0T_pWkxXc4l-",
+  "673548": "PLDfB2rHFTxIs-oFKb41bmIVryl11DYCSn",
+  "684007": "PLDfB2rHFTxIubCNHPjeux51324bvczSjZ",
+  "808959": "PLDfB2rHFTxItaGUAsS8DjMHpMVAGnGI-k"
+}

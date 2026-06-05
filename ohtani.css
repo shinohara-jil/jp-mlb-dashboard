@@ -17,6 +17,39 @@
 .intro-sub { font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 6px; }
 .intro-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
+/* ===== SPOTV NOW ダイジェスト動画 ===== */
+.spotv-section {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  margin-bottom: 18px;
+}
+.spotv-title {
+  font-size: 16px;
+  color: var(--navy);
+  border-left: 5px solid var(--blue);
+  padding-left: 10px;
+  margin: 0 0 10px;
+}
+/* 16:9 の枠を保ったまま画面幅に合わせて伸縮（はみ出さない） */
+.spotv-player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.spotv-player iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.spotv-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
 /* ===== 投手・野手タブ ===== */
 .ohtani-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
 .tab-btn {

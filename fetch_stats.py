@@ -9,6 +9,7 @@ import json
 import os
 import urllib.request
 import urllib.parse
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -220,9 +221,149 @@ def save_data(payload):
     return latest_path
 
 
+# ============================================================
+#  SPOTV NOW のダイジェスト動画（YouTube）
+#  各選手の「最新のダイジェスト動画」を探して data/spotv_videos.json に保存する。
+#  - APIキー不要。YouTubeの公開フィード(RSS)だけを使う。
+#  - 一部の選手は選手別の再生リストが更新されない(古い)ため、
+#    チャンネル全体の最新フィードから「名前＋ダイジェスト」の最新動画を拾うのが要点。
+# ============================================================
+SPOTV_CHANNEL_ID = "UCJ-l-sMQFHogSy8KXRyMIRA"  # SPOTV NOW 公式チャンネル
+_ATOM = "{http://www.w3.org/2005/Atom}"
+_YT = "{http://www.youtube.com/xml/schemas/2015}"
+
+
+def load_spotv_playlists():
+    """選手ID→SPOTV NOWの再生リストID の対応表を読む。先頭の説明キーは除外。"""
+    path = os.path.join(CONFIG_DIR, "spotv_playlists.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return {k: v for k, v in data.items() if not k.startswith("_")}
+    except FileNotFoundError:
+        return {}
+
+
+def get_xml(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "jp-mlb-dashboard/1.0"})
+    with urllib.request.urlopen(req, timeout=20) as res:
+        return ET.fromstring(res.read())
+
+
+def parse_feed_entries(root):
+    """YouTubeのAtomフィードから [{videoId, title, published}] を返す。"""
+    out = []
+    for entry in root.findall(f"{_ATOM}entry"):
+        vid = entry.findtext(f"{_YT}videoId")
+        title = entry.findtext(f"{_ATOM}title") or ""
+        published = entry.findtext(f"{_ATOM}published") or ""
+        if vid:
+            out.append({"videoId": vid, "title": title, "published": published})
+    return out
+
+
+def fetch_channel_entries():
+    """SPOTV NOW公式チャンネルの最新アップロード一覧（新しい順・約15件）。"""
+    try:
+        root = get_xml(f"https://www.youtube.com/feeds/videos.xml?channel_id={SPOTV_CHANNEL_ID}")
+        return parse_feed_entries(root)
+    except Exception as e:
+        print(f"  SPOTV チャンネルフィード取得失敗: {e}")
+        return []
+
+
+def fetch_playlist_entries(playlist_id):
+    """選手別の再生リストの動画一覧を返す（無ければ空）。"""
+    try:
+        root = get_xml(f"https://www.youtube.com/feeds/videos.xml?playlist_id={playlist_id}")
+        return parse_feed_entries(root)
+    except Exception as e:
+        print(f"  SPOTV 再生リスト取得失敗({playlist_id}): {e}")
+        return []
+
+
+def is_digest(title, name_key):
+    """その選手の『まとめ(ダイジェスト)動画』らしいタイトルか。
+    選手名を含み・『ダイジェスト』を含み・ショート動画(#shorts)ではないもの。
+    現地実況クリップや試合ハイライト等(まとめ以外)を除くための判定。"""
+    if not name_key:
+        return False
+    t = title or ""
+    return (name_key in t) and ("ダイジェスト" in t) and ("shorts" not in t.lower())
+
+
+def load_existing_spotv_videos():
+    """前回保存した動画情報を読む（後退防止＝一度拾った最新より古いものに戻さないため）。"""
+    path = os.path.join(DATA_DIR, "spotv_videos.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f).get("videos", {})
+    except (FileNotFoundError, ValueError):
+        return {}
+
+
+def build_spotv_videos(players):
+    """登録選手ごとに『最新のダイジェスト動画』を見つけて辞書で返す。
+    候補＝(前回保存) / (チャンネル最新フィードで 名前＋ダイジェスト 一致) / (選手別再生リストの最新)
+    の中で、最も新しい(published)ものを採用する。"""
+    playlists = load_spotv_playlists()
+    if not playlists:
+        return {}
+    name_by_id = {str(p["id"]): p.get("name_ja", "") for p in players}
+    channel = fetch_channel_entries()
+    existing = load_existing_spotv_videos()
+
+    videos = {}
+    for pid, playlist_id in playlists.items():
+        key = name_by_id.get(pid, "").replace(" ", "").replace("　", "")
+        candidates = []
+        # 前回保存（後退防止）。※まとめ動画と判定できるものだけ引き継ぐ。
+        if pid in existing and existing[pid].get("videoId") and is_digest(existing[pid].get("title", ""), key):
+            candidates.append(existing[pid])
+        # チャンネル最新フィードから「選手名＋ダイジェスト」一致
+        candidates += [e for e in channel if is_digest(e["title"], key)]
+        # 選手別再生リストの中の「ダイジェスト」一致（フィードに載っていない選手の保険）
+        candidates += [e for e in fetch_playlist_entries(playlist_id) if is_digest(e["title"], key)]
+        # 最も新しいものを採用
+        if candidates:
+            best = max(candidates, key=lambda e: e.get("published", ""))
+            videos[pid] = {
+                "videoId": best["videoId"],
+                "title": best.get("title", ""),
+                "published": best.get("published", ""),
+            }
+            print(f"  SPOTV動画: {name_by_id.get(pid, pid)} -> {best.get('title', '')[:34]}")
+    return videos
+
+
+def save_spotv_videos(videos):
+    os.makedirs(DATA_DIR, exist_ok=True)
+    path = os.path.join(DATA_DIR, "spotv_videos.json")
+    payload = {
+        "updated_at": (datetime.now(timezone.utc) + timedelta(hours=9)).strftime("%Y-%m-%d %H:%M"),
+        "videos": videos,
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    return path
+
+
+def update_spotv_videos(players):
+    """SPOTV動画情報を組み立てて保存する（失敗しても本体の処理は止めない）。"""
+    try:
+        videos = build_spotv_videos(players)
+        if videos:
+            save_spotv_videos(videos)
+        return videos
+    except Exception as e:
+        print(f"  SPOTV動画の更新でエラー（スキップ）: {e}")
+        return {}
+
+
 def fetch_and_save(limit=None):
     payload = fetch_all(limit=limit)
     save_data(payload)
+    update_spotv_videos(payload["players"])
     return payload
 
 
@@ -230,6 +371,16 @@ if __name__ == "__main__":
     # 使い方:
     #   python fetch_stats.py        … 全選手を取得して保存（本番・自動更新で使用）
     #   python fetch_stats.py 3      … 3人だけ取得（保存しないテスト）
+    #   python fetch_stats.py spotv  … 成績は取らず、SPOTV動画情報だけ更新（既存の latest.json を使用）
+    if len(sys.argv) > 1 and sys.argv[1] == "spotv":
+        print("=== SPOTV動画情報のみ更新 ===")
+        latest_path = os.path.join(DATA_DIR, "latest.json")
+        with open(latest_path, encoding="utf-8") as f:
+            players = json.load(f).get("players", [])
+        videos = update_spotv_videos(players)
+        print(f"=== 完了: SPOTV動画 {len(videos)} 人ぶんを保存しました ===")
+        sys.exit(0)
+
     print(f"=== {current_season()}年シーズン 取得開始 ===")
     if len(sys.argv) > 1:
         data = fetch_all(limit=int(sys.argv[1]))

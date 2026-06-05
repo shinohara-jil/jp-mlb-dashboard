@@ -118,6 +118,47 @@ function applyPlayerIdentity() {
   document.title = `${name} シーズン推移 ｜ 日本人メジャーリーガー成績ダッシュボード`;
 }
 
+// ===== SPOTV NOW ダイジェスト動画の埋め込み =====
+// 毎朝の自動更新(fetch_stats.py)が「各選手の最新ダイジェスト動画」を data/spotv_videos.json に保存する。
+// ここではまずその最新動画(1本)を埋め込む。無ければ再生リストまるごとにフォールバックする。
+async function setupSpotvVideo() {
+  const section = $("spotv");
+  const holder = $("spotv-player");
+  if (!section || !holder) return;
+
+  // ① 最新動画（毎朝の自動更新が選んだ1本）
+  let videoId = null;
+  try {
+    const data = await getJson("data/spotv_videos.json");
+    const v = (data.videos || {})[String(PLAYER_ID)];
+    if (v && v.videoId) videoId = v.videoId;
+  } catch (e) { /* 無ければ再生リストにフォールバック */ }
+
+  // ② 再生リストID（最新動画が無い選手のフォールバック用）
+  let listId = null;
+  try {
+    const map = await getJson("config/spotv_playlists.json");
+    listId = map[String(PLAYER_ID)] || null;
+  } catch (e) { /* 対応表が無ければ listId は null */ }
+
+  if (!videoId && !listId) return; // この選手は未対応 → 動画欄は隠したまま
+
+  // 最新動画があればその1本を、無ければ再生リストを埋め込む。
+  const src = videoId
+    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}`
+    : `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(listId)}`;
+
+  const iframe = document.createElement("iframe");
+  iframe.src = src;
+  iframe.title = `${PLAYER_NAME || "選手"} ダイジェスト動画（SPOTV NOW）`;
+  iframe.loading = "lazy";
+  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+  iframe.referrerPolicy = "strict-origin-when-cross-origin";
+  iframe.allowFullscreen = true;
+  holder.appendChild(iframe);
+  section.hidden = false;
+}
+
 // ===== 起動 =====
 window.addEventListener("DOMContentLoaded", init);
 
@@ -128,6 +169,9 @@ async function init() {
   // 名前がURLで渡っていなければ、先にMLBから補ってから見出しを整える
   if (!PLAYER_NAME) PLAYER_NAME = await fetchPlayerName();
   applyPlayerIdentity();
+
+  // SPOTV NOW のダイジェスト動画（再生リスト）を出す（登録がある選手だけ）
+  setupSpotvVideo();
 
   setStatus("成績を取得しています…（数秒かかります）");
 

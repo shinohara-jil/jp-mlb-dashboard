@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>大谷翔平 シーズン推移 ｜ 日本人メジャーリーガー成績ダッシュボード</title>
   <link rel="stylesheet" href="style.css?v=2026-06-04b">
-  <link rel="stylesheet" href="ohtani.css?v=2026-06-04b">
+  <link rel="stylesheet" href="ohtani.css?v=2026-06-05">
   <meta name="theme-color" content="#1B3A5C">
 
   <!-- グラフ表示部品（Chart.js）。オンライン時のみ読み込む。 -->
@@ -34,6 +34,13 @@
       </div>
     </div>
 
+    <!-- SPOTV NOW の選手別ダイジェスト動画（再生リスト）。対応表に登録がある選手だけ表示される。 -->
+    <section id="spotv" class="spotv-section" hidden>
+      <h2 class="spotv-title">🎬 SPOTV NOW ダイジェスト動画</h2>
+      <div id="spotv-player" class="spotv-player"></div>
+      <div class="spotv-note">SPOTV NOW公式YouTubeより、直近の試合のまとめ動画。毎朝の更新で最新になります。</div>
+    </section>
+
     <div id="tabs" class="ohtani-tabs" role="group" aria-label="投手・野手の切り替え">
       <button class="tab-btn is-active" data-group="pitching">⚾ 投手</button>
       <button class="tab-btn" data-group="hitting">🏏 野手</button>
@@ -47,6 +54,6 @@
   </footer>
 
   <!-- ?v=日付 はキャッシュ対策。ohtani.js / ohtani.css を更新したらこの日付も合わせて変えること -->
-  <script src="ohtani.js?v=2026-06-05"></script>
+  <script src="ohtani.js?v=2026-06-05c"></script>
 </body>
 </html>
